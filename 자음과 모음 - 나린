@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>나나 패밀리의 한글 공부</title>
+  <link href="https://cdn.jsdelivr.net/gh/webfontworld/baemin/BMJUA.css" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+    html, body {
+      width: 100vw; height: 100vh;
+      background: #111;
+      font-family: 'BM JUA', sans-serif;
+      overflow: hidden;
+    }
+
+    #intro {
+      position: absolute;
+      width: 100vw; height: 100vh;
+      background: #FDD835;
+      color: #111;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      font-weight: 900;
+      opacity: 1;
+      transition: opacity 1s ease;
+    }
+
+    #intro h1, #intro .emoji {
+      pointer-events: none;
+      -webkit-user-select: none;
+      user-select: none;
+      font-weight: 900;
+    }
+
+    #intro h1 {
+      font-size: 10vw;
+      text-align: center;
+      line-height: 1.2;
+      white-space: pre-line;
+    }
+
+    #intro .emoji {
+      font-size: 10vw;
+      margin: 2vh 0;
+    }
+
+    #startScreen {
+      display: none;
+      position: absolute;
+      width: 100vw;
+      height: 100vh;
+      background: #111;
+      color: #fff;
+      z-index: 999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #startBtn {
+      font-size: 6vw;
+      padding: 2vh 4vw;
+      background: #FFEB3B;
+      color: #111;
+      border: none;
+      border-radius: 1vh;
+      cursor: pointer;
+    }
+
+    #container {
+      width: 100vw; height: 100vh;
+      position: fixed;
+      top: 0; left: 0;
+      display: none;
+    }
+
+    canvas {
+      position: absolute;
+      width: 100%; height: 100%;
+      touch-action: none;
+    }
+
+    #visibleGuide {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 100vw;
+      color: rgba(255,255,255,0.1);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    #feedback {
+      position: absolute;
+      top: 1vh;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 6vw;
+      color: white;
+      z-index: 3;
+    }
+
+    #progress {
+      position: absolute;
+      top: 7vh;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 4vw;
+      color: #aaa;
+      z-index: 3;
+    }
+
+    button {
+      position: absolute;
+      font-size: 20vw;
+      background: none;
+      border: none;
+      color: white;
+      z-index: 3;
+    }
+
+    #clearBtn { bottom: 2vh; left: 3vw; }
+    #checkBtn { bottom: 2vh; right: 3vw; }
+
+    #restartBtn {
+      display: none;
+      position: absolute;
+      top: 55%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 7vw;
+      background: #FFEB3B;
+      color: #111;
+      padding: 2vh 4vw;
+      border-radius: 2vh;
+      border: none;
+      z-index: 10;
+    }
+
+    #confettiCanvas {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+
+<div id="intro">
+  <h1>나나 패밀리<br>한글 공부</h1>
+  <div class="emoji">👧🏻👧🏻👩🏻👨🏻</div>
+</div>
+
+<div id="startScreen">
+  <button id="startBtn">✏️ 나린아 시작한다!</button>
+</div>
+
+<div id="container">
+  <canvas id="drawCanvas"></canvas>
+  <canvas id="confettiCanvas"></canvas>
+  <div id="visibleGuide">ㄱ</div>
+  <div id="feedback"></div>
+  <div id="progress">1 / 14</div>
+  <button id="clearBtn" onclick="clearCanvas()">🧹</button>
+  <button id="checkBtn" onclick="checkSimilarity()">🤖</button>
+  <button id="restartBtn" onclick="restart()">👧🏻 잘 했어! 또 할꺼야?</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+<script>
+const consonants = ['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const vowels = ['ㅏ','ㅑ','ㅓ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ'];
+let guideChars = [...consonants];
+let currentSet = 'consonants';
+let currentIndex = 0;
+let drawing = false;
+let firstInteraction = false;
+
+const canvas = document.getElementById('drawCanvas');
+const ctx = canvas.getContext('2d');
+const guideEl = document.getElementById('visibleGuide');
+const feedbackEl = document.getElementById('feedback');
+const progressEl = document.getElementById('progress');
+const restartBtn = document.getElementById('restartBtn');
+const confettiCanvas = document.getElementById('confettiCanvas');
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  confettiCanvas.width = window.innerWidth;
+  confettiCanvas.height = window.innerHeight;
+}
+
+function speak(text) {
+  if (!firstInteraction) return;
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'ko-KR';
+  speechSynthesis.speak(utter);
+}
+
+function drawGuide() {
+  const char = guideChars[currentIndex];
+  guideEl.innerText = char;
+  progressEl.innerText = `${currentIndex + 1} / ${guideChars.length}`;
+  speak(char);
+}
+
+function clearCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  feedbackEl.innerText = '';
+}
+
+function goToNext() {
+  if (currentIndex === guideChars.length - 1) {
+    setTimeout(() => {
+      feedbackEl.innerText = '';
+      if (currentSet === 'consonants') {
+        alert("나린! 이제 모음이야~");
+        currentSet = 'vowels';
+        guideChars = [...vowels];
+        currentIndex = 0;
+        drawGuide();
+        clearCanvas();
+      } else {
+        alert("나린~ 잘 했어!❤️");
+        restartBtn.style.display = 'block';
+      }
+    }, 1500);
+  } else {
+    currentIndex++;
+    drawGuide();
+    clearCanvas();
+  }
+}
+
+function restart() {
+  currentSet = 'consonants';
+  guideChars = [...consonants];
+  currentIndex = 0;
+  drawGuide();
+  clearCanvas();
+  restartBtn.style.display = 'none';
+}
+
+function checkSimilarity() {
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = canvas.width;
+  tempCanvas.height = canvas.height;
+  const tCtx = tempCanvas.getContext('2d');
+  tCtx.font = `100vw 'BM JUA'`;
+  tCtx.fillStyle = "#fff";
+  tCtx.textAlign = 'center';
+  tCtx.textBaseline = 'middle';
+  tCtx.fillText(guideChars[currentIndex], canvas.width / 2, canvas.height / 2);
+
+  const userData = ctx.getImageData(0,0,canvas.width,canvas.height).data;
+  const refData = tCtx.getImageData(0,0,canvas.width,canvas.height).data;
+  let match = 0, total = 0;
+
+  for(let i=0; i<refData.length; i+=4){
+    if(refData[i+3]>10){ total++;
+      if(userData[i+3]>10) match++;
+    }
+  }
+
+  const accuracy = (match / total) * 100;
+  let message = '😢 다시 시도해보자!';
+  if(accuracy >= 90) message = '🥇 완벽한데!';
+  else if(accuracy >= 70) message = '👏 최고야!';
+  else if(accuracy >= 50) message = '😊 좋아!';
+  else if(accuracy >= 30) message = '🙂 잘했어!';
+  feedbackEl.innerText = message;
+
+  if(accuracy >= 30){
+    confetti.create(confettiCanvas)({
+      particleCount: 100,
+      spread: 70,
+      startVelocity: 50,
+      decay: 0.94,
+      ticks: 120
+    });
+    setTimeout(goToNext, 1800);
+  }
+}
+
+document.getElementById('startBtn').addEventListener('click', () => {
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('container').style.display = 'block';
+  resizeCanvas();
+  drawGuide();
+});
+
+['click', 'touchstart'].forEach(evt => {
+  window.addEventListener(evt, () => {
+    if (!firstInteraction) {
+      firstInteraction = true;
+      speak(guideChars[currentIndex]);
+    }
+  }, { once: true });
+});
+
+canvas.addEventListener('mousedown', e => {
+  drawing = true; ctx.beginPath(); ctx.moveTo(e.clientX,e.clientY);
+});
+canvas.addEventListener('mousemove', e => {
+  if(drawing){ ctx.lineTo(e.clientX,e.clientY); ctx.strokeStyle="#fff"; ctx.lineWidth=24; ctx.lineCap='round'; ctx.stroke(); }
+});
+canvas.addEventListener('mouseup', ()=> drawing = false);
+
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const t = e.touches[0];
+  drawing = true;
+  ctx.beginPath();
+  ctx.moveTo(t.clientX, t.clientY);
+});
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if(drawing){
+    const t = e.touches[0];
+    ctx.lineTo(t.clientX, t.clientY);
+    ctx.strokeStyle="#fff";
+    ctx.lineWidth=24;
+    ctx.lineCap='round';
+    ctx.stroke();
+  }
+});
+canvas.addEventListener('touchend', () => drawing = false);
+
+// 인트로 → 시작 화면 전환 (DOMContentLoaded 이후 실행)
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    const intro = document.getElementById('intro');
+    const startScreen = document.getElementById('startScreen');
+    intro.style.opacity = '0';
+    setTimeout(() => {
+      intro.style.display = 'none';
+      startScreen.style.display = 'flex';
+    }, 1000);
+  }, 2000);
+});
+
+resizeCanvas();
+</script>
+</body>
+</html>
