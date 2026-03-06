@@ -3,352 +3,523 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>나나 패밀리의 한글 공부</title>
+  <title>한글 모험 놀이터</title>
   <link href="https://cdn.jsdelivr.net/gh/webfontworld/baemin/BMJUA.css" rel="stylesheet" />
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-user-select: none; user-select: none; }
     html, body {
-      width: 100vw; height: 100vh;
-      background: #111;
-      font-family: 'BM JUA', sans-serif;
+      width: 100vw;
+      height: 100vh;
       overflow: hidden;
+      background: #10121a;
+      color: #fff;
+      font-family: 'BM JUA', sans-serif;
+    }
+
+    #intro, #menu, #gameScreen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 4vh 5vw;
+      text-align: center;
     }
 
     #intro {
-      position: absolute;
-      width: 100vw; height: 100vh;
-      background: #FDD835;
-      color: #111;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-      font-weight: 900;
-      opacity: 1;
-      transition: opacity 1s ease;
+      z-index: 3;
+      background: linear-gradient(135deg, #ffd54f, #ff9800);
+      color: #2d2208;
+      transition: opacity 0.8s ease;
     }
 
-    #intro h1, #intro .emoji {
-      pointer-events: none;
-      -webkit-user-select: none;
-      user-select: none;
-      font-weight: 900;
-    }
+    #intro h1 { font-size: min(12vw, 76px); line-height: 1.2; }
+    #intro p { margin-top: 2vh; font-size: min(4.4vw, 28px); }
 
-    #intro h1 {
-      font-size: 10vw;
-      text-align: center;
-      line-height: 1.2;
-      white-space: pre-line;
-    }
-
-    #intro .emoji {
-      font-size: 10vw;
-      margin: 2vh 0;
-    }
-
-    #startScreen {
+    #menu {
+      z-index: 2;
       display: none;
-      position: absolute;
-      width: 100vw;
-      height: 100vh;
-      background: #111;
-      color: #fff;
-      z-index: 999;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      gap: 2vh;
+      background: radial-gradient(circle at top, #29324c 0%, #141826 60%, #0d1018 100%);
     }
 
-    #startBtn {
-      font-size: 6vw;
-      padding: 2vh 4vw;
-      background: #FFEB3B;
-      color: #111;
+    .title { font-size: min(9vw, 54px); color: #ffec7d; text-shadow: 0 3px 0 rgba(0,0,0,0.35); }
+    .subtitle { font-size: min(4.5vw, 26px); color: #d5deff; margin-bottom: 2vh; }
+
+    .menu-grid {
+      display: grid;
+      width: min(92vw, 560px);
+      grid-template-columns: 1fr;
+      gap: 1.5vh;
+    }
+
+    .menu-btn {
       border: none;
-      border-radius: 1vh;
+      border-radius: 16px;
+      padding: 2.1vh 2vw;
+      font-size: min(7vw, 40px);
+      color: #10203f;
+      background: #ffeb3b;
+      box-shadow: 0 8px 0 #c3b429;
       cursor: pointer;
     }
 
-    #container {
-      width: 100vw; height: 100vh;
-      position: fixed;
-      top: 0; left: 0;
+    .menu-btn:active { transform: translateY(3px); box-shadow: 0 5px 0 #c3b429; }
+
+    #gameScreen {
       display: none;
-    }
-
-    canvas {
-      position: absolute;
-      width: 100%; height: 100%;
-      touch-action: none;
-    }
-
-    #visibleGuide {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 100vw;
-      color: rgba(255,255,255,0.1);
-      pointer-events: none;
+      justify-content: flex-start;
+      background: #090d17;
       z-index: 1;
     }
 
+    .top-bar {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 1vh;
+      align-items: center;
+      padding-top: 1.5vh;
+      z-index: 3;
+    }
+
+    .status {
+      text-align: left;
+      font-size: min(4.2vw, 24px);
+      color: #cfd8ff;
+    }
+
+    #score {
+      font-size: min(4.7vw, 28px);
+      color: #ffeb3b;
+    }
+
+    #guideBox {
+      margin-top: 2vh;
+      width: 100%;
+      text-align: center;
+      z-index: 3;
+    }
+
+    #modeLabel {
+      font-size: min(4.5vw, 26px);
+      color: #8dd7ff;
+    }
+
+    #target {
+      margin-top: 0.5vh;
+      font-size: min(19vw, 150px);
+      line-height: 1;
+      color: #ffffff;
+      text-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    }
+
+    #hint {
+      margin-top: 1vh;
+      font-size: min(4.4vw, 26px);
+      color: #ffd8b3;
+      min-height: 1.5em;
+    }
+
     #feedback {
-      position: absolute;
-      top: 1vh;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 6vw;
-      color: white;
-      z-index: 3;
+      margin-top: 0.6vh;
+      font-size: min(5vw, 30px);
+      color: #ffec7d;
+      min-height: 1.5em;
     }
 
-    #progress {
+    #drawCanvas {
       position: absolute;
-      top: 7vh;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 4vw;
-      color: #aaa;
-      z-index: 3;
-    }
-
-    button {
-      position: absolute;
-      font-size: 20vw;
-      background: none;
-      border: none;
-      color: white;
-      z-index: 3;
-    }
-
-    #clearBtn { bottom: 2vh; left: 3vw; }
-    #checkBtn { bottom: 2vh; right: 3vw; }
-
-    #restartBtn {
-      display: none;
-      position: absolute;
-      top: 55%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 7vw;
-      background: #FFEB3B;
-      color: #111;
-      padding: 2vh 4vw;
-      border-radius: 2vh;
-      border: none;
-      z-index: 10;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+      z-index: 1;
     }
 
     #confettiCanvas {
       position: absolute;
-      top: 0; left: 0;
-      width: 100vw;
-      height: 100vh;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 5;
       pointer-events: none;
-      z-index: 999;
     }
+
+    .controls {
+      position: absolute;
+      bottom: 3vh;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 2vw;
+      z-index: 4;
+    }
+
+    .ctrl-btn {
+      border: none;
+      border-radius: 14px;
+      font-size: min(7vw, 42px);
+      padding: 1.6vh 3.8vw;
+      background: #1f2a44;
+      color: #fff;
+      box-shadow: 0 6px 0 #141b2b;
+      cursor: pointer;
+    }
+
+    .ctrl-btn.primary { background: #00c853; box-shadow: 0 6px 0 #06853c; }
+
+    #resultModal {
+      display: none;
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      background: rgba(9, 12, 20, 0.78);
+      align-items: center;
+      justify-content: center;
+      padding: 4vh 4vw;
+    }
+
+    #resultCard {
+      width: min(90vw, 540px);
+      background: #1b2339;
+      border-radius: 18px;
+      padding: 3vh 5vw;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.4);
+    }
+
+    #resultCard h2 { font-size: min(9vw, 50px); color: #ffef7a; }
+    #resultText { margin-top: 1vh; font-size: min(5vw, 30px); color: #ffffff; }
+    #resultCard .menu-btn { margin-top: 2vh; width: 100%; font-size: min(6vw, 36px); }
   </style>
 </head>
 <body>
+  <div id="intro">
+    <h1>한글 모험 놀이터</h1>
+    <p>자음 · 모음 · 받침을 게임처럼 배워요! 👧🏻👦🏻</p>
+  </div>
 
-<div id="intro">
-  <h1>나나 패밀리<br>한글 공부</h1>
-  <div class="emoji">👧🏻👧🏻👩🏻👨🏻</div>
-</div>
+  <div id="menu">
+    <div class="title">오늘의 한글 게임</div>
+    <div class="subtitle">배우고 싶은 모드를 눌러보자!</div>
+    <div class="menu-grid">
+      <button class="menu-btn" data-mode="consonant">🧩 자음 따라 쓰기</button>
+      <button class="menu-btn" data-mode="vowel">🌈 모음 따라 쓰기</button>
+      <button class="menu-btn" data-mode="batchim">🚀 받침 소리 맞히기</button>
+      <button class="menu-btn" data-mode="mixed">🎯 자음+모음+받침 랜덤</button>
+    </div>
+  </div>
 
-<div id="startScreen">
-  <button id="startBtn">✏️ 나린아 시작한다!</button>
-</div>
+  <div id="gameScreen">
+    <canvas id="drawCanvas"></canvas>
+    <canvas id="confettiCanvas"></canvas>
 
-<div id="container">
-  <canvas id="drawCanvas"></canvas>
-  <canvas id="confettiCanvas"></canvas>
-  <div id="visibleGuide">ㄱ</div>
-  <div id="feedback"></div>
-  <div id="progress">1 / 14</div>
-  <button id="clearBtn" onclick="clearCanvas()">🧹</button>
-  <button id="checkBtn" onclick="checkSimilarity()">🤖</button>
-  <button id="restartBtn" onclick="restart()">👧🏻 잘 했어! 또 할꺼야?</button>
-</div>
+    <div class="top-bar">
+      <div class="status" id="progress">1 / 1</div>
+      <div id="score">⭐ 점수 0</div>
+    </div>
 
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-<script>
-const consonants = ['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
-const vowels = ['ㅏ','ㅑ','ㅓ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ'];
-let guideChars = [...consonants];
-let currentSet = 'consonants';
-let currentIndex = 0;
-let drawing = false;
-let firstInteraction = false;
+    <div id="guideBox">
+      <div id="modeLabel">학습 모드</div>
+      <div id="target">ㄱ</div>
+      <div id="hint"></div>
+      <div id="feedback"></div>
+    </div>
 
-const canvas = document.getElementById('drawCanvas');
-const ctx = canvas.getContext('2d');
-const guideEl = document.getElementById('visibleGuide');
-const feedbackEl = document.getElementById('feedback');
-const progressEl = document.getElementById('progress');
-const restartBtn = document.getElementById('restartBtn');
-const confettiCanvas = document.getElementById('confettiCanvas');
+    <div class="controls">
+      <button class="ctrl-btn" id="menuBtn">🏠</button>
+      <button class="ctrl-btn" id="clearBtn">🧹</button>
+      <button class="ctrl-btn primary" id="checkBtn">✅</button>
+    </div>
+  </div>
 
-function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  confettiCanvas.width = window.innerWidth;
-  confettiCanvas.height = window.innerHeight;
-}
+  <div id="resultModal">
+    <div id="resultCard">
+      <h2>완료했어!</h2>
+      <div id="resultText"></div>
+      <button class="menu-btn" id="playAgainBtn">다시 도전</button>
+      <button class="menu-btn" id="toMenuBtn">메뉴로 가기</button>
+    </div>
+  </div>
 
-function speak(text) {
-  if (!firstInteraction) return;
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = 'ko-KR';
-  speechSynthesis.speak(utter);
-}
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+  <script>
+    const consonants = ['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+    const vowels = ['ㅏ','ㅑ','ㅓ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ'];
+    const batchimWords = [
+      { syllable: '각', batchim: 'ㄱ', word: '각', hint: '🦌 사슴의 뿔은 뾰족해요. "각"의 받침은?' },
+      { syllable: '눈', batchim: 'ㄴ', word: '눈', hint: '❄️ 하늘에서 내리는 "눈"의 받침은?' },
+      { syllable: '꽃', batchim: 'ㅊ', word: '꽃', hint: '🌸 예쁜 "꽃"의 마지막 소리는?' },
+      { syllable: '집', batchim: 'ㅂ', word: '집', hint: '🏠 우리가 사는 "집"의 받침은?' },
+      { syllable: '달', batchim: 'ㄹ', word: '달', hint: '🌙 밤하늘의 "달" 받침은?' },
+      { syllable: '밥', batchim: 'ㅂ', word: '밥', hint: '🍚 맛있는 "밥"의 받침은?' }
+    ];
 
-function drawGuide() {
-  const char = guideChars[currentIndex];
-  guideEl.innerText = char;
-  progressEl.innerText = `${currentIndex + 1} / ${guideChars.length}`;
-  speak(char);
-}
+    const modeConfig = {
+      consonant: { label: '자음 따라 쓰기', type: 'trace' },
+      vowel: { label: '모음 따라 쓰기', type: 'trace' },
+      batchim: { label: '받침 소리 맞히기', type: 'batchim' },
+      mixed: { label: '랜덤 종합 학습', type: 'mixed' }
+    };
 
-function clearCanvas() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  feedbackEl.innerText = '';
-}
+    const introEl = document.getElementById('intro');
+    const menuEl = document.getElementById('menu');
+    const gameScreen = document.getElementById('gameScreen');
+    const progressEl = document.getElementById('progress');
+    const scoreEl = document.getElementById('score');
+    const modeLabelEl = document.getElementById('modeLabel');
+    const targetEl = document.getElementById('target');
+    const hintEl = document.getElementById('hint');
+    const feedbackEl = document.getElementById('feedback');
+    const resultModal = document.getElementById('resultModal');
+    const resultText = document.getElementById('resultText');
 
-function goToNext() {
-  if (currentIndex === guideChars.length - 1) {
-    setTimeout(() => {
-      feedbackEl.innerText = '';
-      if (currentSet === 'consonants') {
-        alert("나린! 이제 모음이야~");
-        currentSet = 'vowels';
-        guideChars = [...vowels];
-        currentIndex = 0;
-        drawGuide();
-        clearCanvas();
+    const canvas = document.getElementById('drawCanvas');
+    const ctx = canvas.getContext('2d');
+    const confettiCanvas = document.getElementById('confettiCanvas');
+
+    let firstInteraction = false;
+    let drawing = false;
+    let score = 0;
+    let currentIndex = 0;
+    let currentMode = 'consonant';
+    let rounds = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      confettiCanvas.width = window.innerWidth;
+      confettiCanvas.height = window.innerHeight;
+      setupPen();
+    }
+
+    function setupPen() {
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = Math.max(14, window.innerWidth * 0.04);
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+    }
+
+    function speak(text) {
+      if (!firstInteraction || !('speechSynthesis' in window)) return;
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'ko-KR';
+      speechSynthesis.cancel();
+      speechSynthesis.speak(utter);
+    }
+
+    function clearCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function showMenu() {
+      gameScreen.style.display = 'none';
+      resultModal.style.display = 'none';
+      menuEl.style.display = 'flex';
+    }
+
+    function buildRounds(mode) {
+      if (mode === 'consonant') return consonants.map(char => ({ kind: 'trace', target: char }));
+      if (mode === 'vowel') return vowels.map(char => ({ kind: 'trace', target: char }));
+      if (mode === 'batchim') return batchimWords.map(item => ({ kind: 'batchim', ...item }));
+
+      const mixedSet = [
+        ...consonants.slice(0, 6).map(char => ({ kind: 'trace', target: char })),
+        ...vowels.slice(0, 5).map(char => ({ kind: 'trace', target: char })),
+        ...batchimWords.slice(0, 4).map(item => ({ kind: 'batchim', ...item }))
+      ];
+      return mixedSet.sort(() => Math.random() - 0.5);
+    }
+
+    function startGame(mode) {
+      currentMode = mode;
+      rounds = buildRounds(mode);
+      currentIndex = 0;
+      score = 0;
+      resultModal.style.display = 'none';
+      menuEl.style.display = 'none';
+      gameScreen.style.display = 'flex';
+      updateRound();
+      clearCanvas();
+    }
+
+    function updateRound() {
+      const round = rounds[currentIndex];
+      progressEl.textContent = `${currentIndex + 1} / ${rounds.length}`;
+      scoreEl.textContent = `⭐ 점수 ${score}`;
+      modeLabelEl.textContent = modeConfig[currentMode].label;
+      feedbackEl.textContent = '';
+      clearCanvas();
+
+      if (round.kind === 'trace') {
+        targetEl.textContent = round.target;
+        hintEl.textContent = '점선을 따라 크게 써보고, 확인 버튼을 눌러요!';
+        targetEl.style.opacity = '0.25';
+        speak(round.target);
       } else {
-        alert("나린~ 잘 했어!❤️");
-        restartBtn.style.display = 'block';
+        targetEl.textContent = round.syllable;
+        hintEl.textContent = round.hint;
+        targetEl.style.opacity = '1';
+        speak(`${round.word} 받침 맞히기`);
       }
-    }, 1500);
-  } else {
-    currentIndex++;
-    drawGuide();
-    clearCanvas();
-  }
-}
-
-function restart() {
-  currentSet = 'consonants';
-  guideChars = [...consonants];
-  currentIndex = 0;
-  drawGuide();
-  clearCanvas();
-  restartBtn.style.display = 'none';
-}
-
-function checkSimilarity() {
-  const tempCanvas = document.createElement('canvas');
-  tempCanvas.width = canvas.width;
-  tempCanvas.height = canvas.height;
-  const tCtx = tempCanvas.getContext('2d');
-  tCtx.font = `100vw 'BM JUA'`;
-  tCtx.fillStyle = "#fff";
-  tCtx.textAlign = 'center';
-  tCtx.textBaseline = 'middle';
-  tCtx.fillText(guideChars[currentIndex], canvas.width / 2, canvas.height / 2);
-
-  const userData = ctx.getImageData(0,0,canvas.width,canvas.height).data;
-  const refData = tCtx.getImageData(0,0,canvas.width,canvas.height).data;
-  let match = 0, total = 0;
-
-  for(let i=0; i<refData.length; i+=4){
-    if(refData[i+3]>10){ total++;
-      if(userData[i+3]>10) match++;
     }
-  }
 
-  const accuracy = (match / total) * 100;
-  let message = '😢 다시 시도해보자!';
-  if(accuracy >= 90) message = '🥇 완벽한데!';
-  else if(accuracy >= 70) message = '👏 최고야!';
-  else if(accuracy >= 50) message = '😊 좋아!';
-  else if(accuracy >= 30) message = '🙂 잘했어!';
-  feedbackEl.innerText = message;
+    function traceAccuracy(char) {
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = canvas.width;
+      tempCanvas.height = canvas.height;
+      const tCtx = tempCanvas.getContext('2d');
+      tCtx.font = `${Math.min(canvas.width * 0.56, canvas.height * 0.5)}px 'BM JUA'`;
+      tCtx.fillStyle = '#ffffff';
+      tCtx.textAlign = 'center';
+      tCtx.textBaseline = 'middle';
+      tCtx.fillText(char, canvas.width / 2, canvas.height / 2);
 
-  if(accuracy >= 30){
-    confetti.create(confettiCanvas)({
-      particleCount: 100,
-      spread: 70,
-      startVelocity: 50,
-      decay: 0.94,
-      ticks: 120
+      const userData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+      const refData = tCtx.getImageData(0, 0, canvas.width, canvas.height).data;
+      let match = 0;
+      let total = 0;
+
+      for (let i = 0; i < refData.length; i += 4) {
+        if (refData[i + 3] > 10) {
+          total += 1;
+          if (userData[i + 3] > 10) match += 1;
+        }
+      }
+      return total ? (match / total) * 100 : 0;
+    }
+
+    function nextRound() {
+      if (currentIndex >= rounds.length - 1) {
+        finishGame();
+        return;
+      }
+      currentIndex += 1;
+      updateRound();
+    }
+
+    function celebrate() {
+      confetti.create(confettiCanvas)({
+        particleCount: 90,
+        spread: 74,
+        startVelocity: 48,
+        decay: 0.93,
+        ticks: 110
+      });
+    }
+
+    function checkAnswer() {
+      const round = rounds[currentIndex];
+
+      if (round.kind === 'trace') {
+        const accuracy = traceAccuracy(round.target);
+        if (accuracy >= 33) {
+          const gained = accuracy >= 70 ? 10 : 6;
+          score += gained;
+          feedbackEl.textContent = `멋져! +${gained}점 (${Math.round(accuracy)}점 정확도)`;
+          celebrate();
+          setTimeout(nextRound, 1200);
+        } else {
+          feedbackEl.textContent = `조금만 더! (${Math.round(accuracy)}점)`;
+          speak('한 번 더 써볼까?');
+        }
+        scoreEl.textContent = `⭐ 점수 ${score}`;
+        return;
+      }
+
+      const answer = prompt(`"${round.word}"의 받침은 무엇일까? (예: ㄱ)`);
+      if (!answer) {
+        feedbackEl.textContent = '입력하지 않았어. 다시 눌러볼까?';
+        return;
+      }
+
+      const cleaned = answer.trim();
+      if (cleaned === round.batchim) {
+        score += 12;
+        scoreEl.textContent = `⭐ 점수 ${score}`;
+        feedbackEl.textContent = `정답! ${round.syllable}의 받침은 ${round.batchim}`;
+        celebrate();
+        speak('정답이야');
+        setTimeout(nextRound, 1200);
+      } else {
+        feedbackEl.textContent = `아쉬워! 정답은 ${round.batchim}이야.`;
+        speak(`정답은 ${round.batchim}`);
+      }
+    }
+
+    function finishGame() {
+      resultText.textContent = `총 ${rounds.length}문제를 끝냈고, ${score}점을 받았어! 정말 잘했어!`;
+      resultModal.style.display = 'flex';
+      celebrate();
+      celebrate();
+      speak('게임 완료! 최고야!');
+    }
+
+    function pointerPos(event) {
+      if (event.touches && event.touches.length) {
+        return { x: event.touches[0].clientX, y: event.touches[0].clientY };
+      }
+      return { x: event.clientX, y: event.clientY };
+    }
+
+    function beginDraw(event) {
+      const round = rounds[currentIndex];
+      if (!round || round.kind !== 'trace') return;
+      event.preventDefault();
+      const p = pointerPos(event);
+      drawing = true;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+    }
+
+    function moveDraw(event) {
+      if (!drawing) return;
+      event.preventDefault();
+      const p = pointerPos(event);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+    }
+
+    function stopDraw() {
+      drawing = false;
+    }
+
+    document.querySelectorAll('.menu-btn[data-mode]').forEach((btn) => {
+      btn.addEventListener('click', () => startGame(btn.dataset.mode));
     });
-    setTimeout(goToNext, 1800);
-  }
-}
 
-document.getElementById('startBtn').addEventListener('click', () => {
-  document.getElementById('startScreen').style.display = 'none';
-  document.getElementById('container').style.display = 'block';
-  resizeCanvas();
-  drawGuide();
-});
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      clearCanvas();
+      feedbackEl.textContent = '';
+    });
 
-['click', 'touchstart'].forEach(evt => {
-  window.addEventListener(evt, () => {
-    if (!firstInteraction) {
-      firstInteraction = true;
-      speak(guideChars[currentIndex]);
-    }
-  }, { once: true });
-});
+    document.getElementById('checkBtn').addEventListener('click', checkAnswer);
+    document.getElementById('menuBtn').addEventListener('click', showMenu);
+    document.getElementById('playAgainBtn').addEventListener('click', () => startGame(currentMode));
+    document.getElementById('toMenuBtn').addEventListener('click', showMenu);
 
-canvas.addEventListener('mousedown', e => {
-  drawing = true; ctx.beginPath(); ctx.moveTo(e.clientX,e.clientY);
-});
-canvas.addEventListener('mousemove', e => {
-  if(drawing){ ctx.lineTo(e.clientX,e.clientY); ctx.strokeStyle="#fff"; ctx.lineWidth=24; ctx.lineCap='round'; ctx.stroke(); }
-});
-canvas.addEventListener('mouseup', ()=> drawing = false);
+    ['mousedown', 'touchstart'].forEach((evt) => canvas.addEventListener(evt, beginDraw, { passive: false }));
+    ['mousemove', 'touchmove'].forEach((evt) => canvas.addEventListener(evt, moveDraw, { passive: false }));
+    ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach((evt) => canvas.addEventListener(evt, stopDraw));
 
-canvas.addEventListener('touchstart', e => {
-  e.preventDefault();
-  const t = e.touches[0];
-  drawing = true;
-  ctx.beginPath();
-  ctx.moveTo(t.clientX, t.clientY);
-});
-canvas.addEventListener('touchmove', e => {
-  e.preventDefault();
-  if(drawing){
-    const t = e.touches[0];
-    ctx.lineTo(t.clientX, t.clientY);
-    ctx.strokeStyle="#fff";
-    ctx.lineWidth=24;
-    ctx.lineCap='round';
-    ctx.stroke();
-  }
-});
-canvas.addEventListener('touchend', () => drawing = false);
+    ['click', 'touchstart', 'keydown'].forEach(evt => {
+      window.addEventListener(evt, () => { firstInteraction = true; }, { once: true });
+    });
 
-// 인트로 → 시작 화면 전환 (DOMContentLoaded 이후 실행)
-document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(() => {
-    const intro = document.getElementById('intro');
-    const startScreen = document.getElementById('startScreen');
-    intro.style.opacity = '0';
-    setTimeout(() => {
-      intro.style.display = 'none';
-      startScreen.style.display = 'flex';
-    }, 1000);
-  }, 2000);
-});
+    window.addEventListener('resize', resizeCanvas);
 
-resizeCanvas();
-</script>
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        introEl.style.opacity = '0';
+        setTimeout(() => {
+          introEl.style.display = 'none';
+          menuEl.style.display = 'flex';
+        }, 850);
+      }, 1400);
+
+      resizeCanvas();
+    });
+  </script>
 </body>
 </html>
